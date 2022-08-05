@@ -5,6 +5,7 @@ Retrieves files and TDMS file data
 
 import os
 import numpy as np
+import scipy.io
 from nptdms import TdmsFile
 from nptdms import tdms
 
@@ -36,3 +37,11 @@ def tdms_read(file):
         data[i][:] = channel[:]
         i += 1
     return data
+
+# Exports decimated data to a .mat file for matlab usage
+def mat_save(data):
+    scipy.io.savemat("Output/Out.mat", data)
+
+# Exports decimated data back into a tdms file
+def tdms_save(data):
+    print("cat")
