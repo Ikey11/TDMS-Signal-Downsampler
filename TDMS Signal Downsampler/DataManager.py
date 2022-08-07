@@ -39,8 +39,10 @@ def tdms_read(file):
     return data
 
 # Exports decimated data to a .mat file for matlab usage
-def mat_save(data):
-    scipy.io.savemat("Output/Out.mat", data)
+def mat_save(data, address="Output/Out.mat"):
+    print("Saving...")
+    scipy.io.savemat(address, {'measurements' : data})
+    print("Save complete!")
 
 # Exports decimated data back into a tdms file
 def tdms_save(data):
