@@ -23,7 +23,7 @@ import DataManager as DM
 
 # Low-pass filter
 def lowpass_filter(data, interval, order=8):
-    system = sig.dlti(*sig.cheby1(order, 0.05, 0.8 / interval))
+    system = sig.dlti(*sig.cheby1(order, 0.05, 0.8))
     b, a = system.num, system.den
     y = sig.filtfilt(b, a, data, axis=-1)
     return y
@@ -59,6 +59,8 @@ if __name__ == "__main__":
     while True:
         try:
             # Custom output parameters
+            print("Decimate factor:")
+            intervalConfig = int(input())
             print("Output:\n1. Mat file [NONFUNCTIONAL]\n2. Mat file and interactable figure\n3. Interactable figure")
             outConfig = int(input())
             if outConfig > 3 or outConfig < 1:
@@ -89,7 +91,8 @@ if __name__ == "__main__":
         print(doc + " shape: " + str(data.shape))
 
         # Proforms individual decimation process for data handling
-        reduce_data = downsample(data, 10)
+        #reduce_data = lowpass_filter(data, intervalConfig)
+        reduce_data = downsample(data, intervalConfig)
         
         print(doc + " decimated shape: " + str(reduce_data.shape))
 
@@ -118,4 +121,5 @@ if __name__ == "__main__":
         if lim1 == lim2 == 0 or lim1 < 0 or lim2 > raw_matrix.shape[1] or lim1 > lim2:
             lim1 = 0
             lim2 = raw_matrix.shape[1]
-        PL.interactable_compairson(raw_matrix, matrix, channel, lim1, lim2, 1000)
+        #PL.interactable_compairson(raw_matrix, matrix, channel, lim1, lim2, intervalConfig)
+        PL.direct_compare(raw_matrix, matrix, channel, lim1, lim2, intervalConfig)
