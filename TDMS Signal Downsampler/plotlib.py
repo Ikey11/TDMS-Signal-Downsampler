@@ -11,6 +11,7 @@ Mason Becker
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Bare bones plot of a channel
 def channel_plot(data, channel):
@@ -31,4 +32,11 @@ def interactable_compairson(raw, downsized, channel, lim1, lim2, decimation):
     ax2.set_title('Raw Data (Channel ' + str(channel) + ')')
     ax2.set_xlim(lim1, lim2)
 
+    plt.show()
+
+def direct_compare(raw, downsized, channel, lim1, lim2, decimation):
+    plt.plot(raw[channel], 'b', label = "Raw")
+    plt.plot(np.arange(lim1, lim2, decimation) ,downsized[channel], 'r', label = "Downsized")
+
+    plt.legend()
     plt.show()
