@@ -3,17 +3,24 @@ Retrieves files and TDMS file data
 
 '''
 
-from os import walk  # Find all files in directory
-from os.path import splitext, join  # File reconition
+from os import mkdir, walk  # File and folder managagment
+from os.path import exists, splitext, join  # File reconition
 from numpy import empty  # Data allocation
 from scipy.io import savemat  # Saving .mat file
 from nptdms import TdmsFile, tdms  # TDMS interactions
 
 
 # Extracts the filepaths of all TDMS files in directory
-def get_filepaths(directory):
-    file_paths = []
+def get_filepaths(directory = "Input"):
+    # Creates input directory
+    if not exists("Output"):
+        mkdir("Output")
+    if not exists(directory):
+        mkdir(directory)
+        print(directory + "and Output Directory made!\nInsert TDAS data and press enter to continue...")
+        input()
 
+    file_paths = []
     # Walk the tree
     for root, directories, files in walk(directory):
         for filename in files:
