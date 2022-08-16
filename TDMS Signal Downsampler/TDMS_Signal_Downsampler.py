@@ -12,11 +12,10 @@ Mason Becker
 """
 
 # Imports
-import numpy as np  # Array processing
-import scipy as sy  # Various signal processing tools
-import scipy.signal as sig
-import time
-import math
+from numpy import empty, append  # Array processing
+from scipy.signal import cheby1, dlti, filtfilt  # Low-pass filter mechanics
+from time import time  # Compilation time
+from math import sqrt, ceil
 
 # Additional Functions
 import plotlib as PL
@@ -31,7 +30,7 @@ def factorize(n):
         n = n / 2
 
     # odd case
-    for i in range(3, int(math.sqrt(n)) + 1, 2):
+    for i in range(3, int(sqrt(n)) + 1, 2):
         while(n % i == 0):
             factors.append(i)
             n = n / i
@@ -44,9 +43,9 @@ def factorize(n):
 
 # Low-pass filter
 def lowpass_filter(data, interval, factors, order=8):
-    system = sig.dlti(*sig.cheby1(order, 0.05, 0.8 / factors[0]))
+    system = dlti(*cheby1(order, 0.05, 0.8 / factors[0]))
     b, a = system.num, system.den
-    y = sig.filtfilt(b, a, data, axis=-1)
+    y = filtfilt(b, a, data, axis=-1)
 
     # Preform recursion in accordence with interval factors
     if len(factors) > 1:
@@ -58,7 +57,7 @@ def downsample(data, interval, order=8):
     print("Passing lowpass filter...")
     noiseless = lowpass_filter(data, interval, factors = factorize(interval), order=order)
     print("Downsampling...")
-    reduced = np.empty([int(noiseless.shape[0]), math.ceil(noiseless.shape[1]/interval)])
+    reduced = empty([int(noiseless.shape[0]), ceil(noiseless.shape[1]/interval)])
     for channel in range(0, noiseless.shape[0]):
         index = 0  # Reduced data datum counter
         for datum in range(0, noiseless.shape[1], interval):
@@ -100,7 +99,7 @@ if __name__ == "__main__":
             continue
 
     # Iterates between each file
-    starttime = time.time()
+    starttime = time()
     print(factorize(intervalConfig))
     first = True
     for doc in file:
@@ -120,11 +119,11 @@ if __name__ == "__main__":
             raw_matrix = data
             first = False
         else:
-            matrix = np.append(matrix, reduce_data, 1)
-            raw_matrix = np.append(raw_matrix, data, 1)
+            matrix = append(matrix, reduce_data, 1)
+            raw_matrix = append(raw_matrix, data, 1)
 
     # Data analysis
-    print("Time Spent: " + str(time.time() - starttime) + "s")
+    print("Time Spent: " + str(time() - starttime) + "s")
     print("Final matrix shape: " + str(matrix.shape))
     print("Raw:")
     print(raw_matrix)
