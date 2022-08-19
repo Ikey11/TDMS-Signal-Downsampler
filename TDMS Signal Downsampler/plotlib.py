@@ -18,6 +18,8 @@ def channel_plot(data, channel):
     plt.plot(data[channel])
     plt.title('Data (Channel ' + str(channel)+ ')')
     plt.savefig('Output/Out.png')
+    print("Figure Saved in Output/Out.png!")
+    plt.show()
     plt.close()
 
 # Offers the user an interactable side-by-side of the raw and decimated data using matplotlib
