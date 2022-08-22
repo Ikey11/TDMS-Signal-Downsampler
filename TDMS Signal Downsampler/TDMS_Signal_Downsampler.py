@@ -13,7 +13,7 @@ Mason Becker
 
 # Imports
 from numpy import empty, append  # Array processing
-from scipy.signal import cheby1, dlti, filtfilt, decimate  # Low-pass filter mechanics
+from scipy.signal import cheby1, dlti, filtfilt, decimate, cosine  # Low-pass filter mechanics
 from time import time  # Compilation time
 from math import sqrt, ceil
 
@@ -101,8 +101,20 @@ if __name__ == "__main__":
             if outConfig > 3 or outConfig < 1:
                 raise Exception
             if outConfig > 1:
-                print("Set channel:")
-                channel = int(input())
+                print("Compair raw and decimated? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
+                if input() != '2':
+                    keep_raw = False
+                    print("Set figure channel:")
+                    channel = int(input())
+                else:
+                    keep_raw = True
+                    print("Compair:\n1. Color plot\n2. Individual channels")
+                    if input() == '1':
+                        color_chart = True
+                    else:
+                        color_chart = False
+                        print("Set figure channel:")
+                        channel = int(input())
             break
         except:
             print("Invalid input")
@@ -128,11 +140,13 @@ if __name__ == "__main__":
         # Create data matrix
         if num == 1:
             matrix = reduce_data
-            #raw_matrix = data
+            if keep_raw: 
+                raw_matrix = data
             first = False
         else:
             matrix = append(matrix, reduce_data, 1)
-            #raw_matrix = append(raw_matrix, data, 1)
+            if keep_raw: 
+                raw_matrix = append(raw_matrix, data, 1)
         num += 1
 
     # Data analysis
@@ -143,7 +157,11 @@ if __name__ == "__main__":
     if outConfig < 3:
         DM.mat_save(matrix)
     if outConfig > 1:
-        #lim1 = 0
-        #lim2 = raw_matrix.shape[1]
-        #PL.direct_compare(raw_matrix, matrix, channel, lim1, lim2, intervalConfig)
-        PL.channel_plot(matrix, channel)
+        # Desides what figure output
+        if keep_raw: 
+            if color_chart:
+                PL.interactable_compairson(raw_matrix, matrix, intervalConfig)
+            else:
+                PL.direct_compare(raw_matrix, matrix, channel, 0, raw_matrix.shape[1], intervalConfig)
+        else: 
+            PL.channel_plot(matrix, channel)
