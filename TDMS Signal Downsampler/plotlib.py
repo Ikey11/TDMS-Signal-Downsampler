@@ -13,16 +13,20 @@ Mason Becker
 import matplotlib.pyplot as plt
 from numpy import arange
 
-# Bare bones plot of a channel
+## Bare bones plot of a channel
 def channel_plot(data, channel):
     plt.plot(data[channel])
     plt.title('Data (Channel ' + str(channel)+ ')')
     plt.savefig('Output/Out.png')
     print("Figure Saved in Output/Out.png!")
     plt.show()
-    plt.close()
 
-# Offers the user an interactable side-by-side of the raw and decimated data using matplotlib
+def waterfall_plot(data):
+    plt.pcolor(data)
+
+    plt.show()
+
+## Offers the user an interactable side-by-side of the raw and decimated data using matplotlib
 def interactable_compairson(raw, downsized, decimation):
     fig1, (ax1, ax2) = plt.subplots(2, 1)
 
@@ -34,6 +38,7 @@ def interactable_compairson(raw, downsized, decimation):
 
     plt.show()
 
+## Interactable graph of two channels
 def direct_compare(raw, downsized, channel, lim1, lim2, decimation):
     plt.plot(raw[channel], 'b', label = "Raw")
     plt.plot(arange(lim1, lim2, decimation) ,downsized[channel], 'r', label = "Downsized")

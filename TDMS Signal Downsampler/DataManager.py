@@ -10,7 +10,7 @@ from scipy.io import savemat  # Saving .mat file
 from nptdms import TdmsFile, tdms  # TDMS interactions
 
 
-# Extracts the filepaths of all TDMS files in directory
+## Extracts the filepaths of all TDMS files in directory
 def get_filepaths(directory = "Input"):
     # Creates input directory
     if not exists("Output"):
@@ -35,6 +35,7 @@ def get_filepaths(directory = "Input"):
 
     return file_paths
 
+## Packages all data from TDMS file into a single matrix
 def tdms_read(file):
     tdms_file = TdmsFile(file)
     measurements = tdms_file['Measurement']
