@@ -100,12 +100,23 @@ if __name__ == "__main__":
             outConfig = int(input())
             if outConfig > 3 or outConfig < 1:
                 raise Exception
+            if outConfig == 1:
+                print("Compair raw and decimated? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
+                if input() != '2':
+                    keep_raw = False
+                else:
+                    keep_raw = True
             if outConfig > 1:
                 print("Compair raw and decimated? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
                 if input() != '2':
                     keep_raw = False
-                    print("Set figure channel:")
-                    channel = int(input())
+                    print("Compair:\n1. Color plot\n2. Individual channel")
+                    if input() == '1':
+                        color_chart = True
+                    else:
+                        color_chart = False
+                        print("Set figure channel:")
+                        channel = int(input())
                 else:
                     keep_raw = True
                     print("Compair:\n1. Color plot\n2. Individual channels")
@@ -123,32 +134,41 @@ if __name__ == "__main__":
     # Iterates between each file
     starttime = time()
     print(factorize(intervalConfig))
-    num = 1
-    for doc in file:
-        print("File (" + str(num) + "/" + str(len(file)) + ")")
+    for doc in range(len(file)):
+        print("File (" + str(doc) + "/" + str(len(file)) + ")")
+
         # Retreves tdms data
-        data = DM.tdms_read(doc)
-        print(doc + " shape: " + str(data.shape))
+        if doc > 0:
+            dataB = DM.tdms_read(file[doc - 1])
+        data = DM.tdms_read(file[doc])
+        if doc < len(file) - 1:
+            dataA = DM.tdms_read(file[doc + 1])
+        # Accumulates the 3 portions into one data set
+        if doc == 0 and doc < len(file) - 1: # Only after
+            data_sum = append(data, dataA, 1)
+        elif doc > 0 and doc == len(file) - 1: # Only before
+            data_sum = append(dataB, data, 1)
+        elif doc > 0 and doc < len(file) - 1: # Before and after
+            data_sum = append(dataB, append(data, dataA, 1), 1)
+        else: # If only one file
+            data_sum = data
+        print("Collected matrix: " + str(data_sum.shape))
 
-        # Proforms individual decimation process for data handling
-        #reduce_data = lowpass_filter(data, intervalConfig)
-        #reduce_data = downsample(data, intervalConfig)
-        reduce_data = sig_decimate(data, factorize(intervalConfig))
-
-        print(doc + " decimated shape: " + str(reduce_data.shape))
+        # Decimates with account to the specified data's neighbores
+        reduce_data = sig_decimate(data_sum, factorize(intervalConfig))
+        print(str(doc) + " decimated shape: " + str(reduce_data.shape))
 
         # Create data matrix
-        if num == 1:
-            matrix = reduce_data
+        if doc == 0:
+            trimmed = reduce_data[:, 0 : ceil(data.shape[1]/intervalConfig)]
+            print("Trimmed shape: " + str(trimmed.shape))
+            matrix = trimmed
             if keep_raw: 
                 raw_matrix = data
-            first = False
         else:
-            matrix = append(matrix, reduce_data, 1)
+            matrix = append(matrix, reduce_data[:, ceil(dataB.shape[1]/intervalConfig) : ceil(dataB.shape[1]/intervalConfig) + ceil(data.shape[1]/intervalConfig)], 1)
             if keep_raw: 
                 raw_matrix = append(raw_matrix, data, 1)
-        num += 1
-
     # Data analysis
     print("Time Spent: " + str(time() - starttime) + "s")
     print("Final matrix shape: " + str(matrix.shape))
@@ -156,6 +176,8 @@ if __name__ == "__main__":
     # Data export
     if outConfig < 3:
         DM.mat_save(matrix)
+        if keep_raw:
+            DM.mat_save(raw_matrix, 'Output/Out_Raw.mat')
     if outConfig > 1:
         # Desides what figure output
         if keep_raw: 
@@ -164,4 +186,7 @@ if __name__ == "__main__":
             else:
                 PL.direct_compare(raw_matrix, matrix, channel, 0, raw_matrix.shape[1], intervalConfig)
         else: 
-            PL.channel_plot(matrix, channel)
+            if color_chart:
+                PL.waterfall_plot(matrix)
+            else:
+                PL.channel_plot(matrix, channel)
