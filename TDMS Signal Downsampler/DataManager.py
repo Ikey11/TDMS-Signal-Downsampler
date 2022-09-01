@@ -38,12 +38,14 @@ def get_filepaths(directory = "Input"):
 ## Packages all data from TDMS file into a single matrix
 def tdms_read(file):
     tdms_file = TdmsFile(file)
+    print("Reading: " + tdms_file.properties['name'])
     measurements = tdms_file['Measurement']
     data = empty([len(measurements.channels()), len(measurements['0'])])
     i = 0
     for channel in measurements.channels():
         data[i][:] = channel[:]
         i += 1
+    print("Matrix created! Shape: " + str(data.shape))
     return data
 
 # Exports decimated data to a .mat file for matlab usage
