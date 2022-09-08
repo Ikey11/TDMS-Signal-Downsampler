@@ -48,7 +48,7 @@ def tdms_read(file):
     print("Matrix created! Shape: " + str(data.shape))
     return data
 
-# Exports decimated data to a .mat file for matlab usage
+## Exports decimated data to a .mat file for matlab usage
 def mat_save(data, address="Output/Out.mat"):
     print("Saving...")
     savemat(address, {'Data' : data})

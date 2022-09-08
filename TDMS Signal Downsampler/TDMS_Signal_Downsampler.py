@@ -21,7 +21,7 @@ from math import sqrt, ceil
 import plotlib as PL
 import DataManager as DM
 
-# Attempts to produce a unique factorization for input integer
+## Attempts to produce a unique factorization for input integer
 def factorize(n):
     factors = []
     # even case
@@ -41,32 +41,7 @@ def factorize(n):
 
     return factors
 
-# Low-pass filter
-def lowpass_filter(data, factors, order=8):
-    system = dlti(*cheby1(order, 0.05, 0.8 / factors[0]))
-    b, a = system.num, system.den
-    y = filtfilt(b, a, data, axis=-1)
-
-    # Preform recursion in accordence with interval factors
-    if len(factors) > 1:
-        y = lowpass_filter(y, factors = factors[1:], order=order) # Slice a factor off and run recursion
-    return y
-
-# Takes every n value out of a data set and creates a new reduced value
-def downsample(data, interval, order=8):
-    print("Passing lowpass filter...")
-    noiseless = lowpass_filter(data, factors = factorize(interval), order=order)
-    print("Downsampling...")
-    reduced = empty([int(noiseless.shape[0]), ceil(noiseless.shape[1]/interval)])
-    for channel in range(0, noiseless.shape[0]):
-        index = 0  # Reduced data datum counter
-        for datum in range(0, noiseless.shape[1], interval):
-            reduced[channel][index]=noiseless[channel][datum]
-            # TBD: Conserve remaining data
-            index += 1
-
-    return reduced
-
+## Runs Scipy's decimation command recursively using factorized intervals to fit the function's parameters
 def sig_decimate(data, factors, order=8):
     print("Decimating...")
     reduced = decimate(data, factors[0], order, ftype='iir')
@@ -77,40 +52,61 @@ def sig_decimate(data, factors, order=8):
         reduced = sig_decimate(reduced, factors = factors[1:], order=order) # Slice a factor off and run recursion
     return reduced
 
-# Main
+## Main Process
 if __name__ == "__main__":
 
+    # Credits
     print("TDMS Signal Downsampler\nBy Mason Becker\n")
 
-    # Data reading
+    # Find each avaliable file in Input directory
     file = DM.get_filepaths(r"Input")
-
+    # User confirmation
     print("Input:")
     for doc in file:
         print(doc)
     print("Total files: " + str(len(file)) + "\n")
 
-    # UI
+    # Specify file parameters
     while True:
         try:
-            # Custom output parameters
-            print("Decimate factor:")
+            # Decimation factor
+            print("Decimate factor (Ensure number consists of prime factors under 13):")
             intervalConfig = int(input())
-            print("Output:\n1. Mat file\n2. Mat file and interactable figure\n3. Interactable figure")
+            factors = factorize(intervalConfig)
+            # Display working method and present warnings
+            print("Factors: {0}".format(factors))
+            for factor in factors:
+                if factor > 13:
+                    print("Warning: decimation factor contains prime factors over 13, this may lead to an inaccurate output.")
+                    print("Continue with decimation?\n1. Yes\n2. No")
+                    if input() != '1':
+                        raise Exception("Resetting...")
+                    else:
+                        break
+
+            # Determine output type
+            print("Output type:\n1. MatLab file\n2. MatLab file and interactable figure\n3. Interactable figure")
             outConfig = int(input())
             if outConfig > 3 or outConfig < 1:
-                raise Exception
+                print("Invalid input, please try again...")
+                continue
+            # MatLab output configuration
             if outConfig == 1:
-                print("Compair raw and decimated? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
-                if input() != '2':
+                print("Output Set to MatLab file!")
+                print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. Yes\n2. No")
+                if input() != '1':
                     keep_raw = False
                 else:
                     keep_raw = True
+            # Configuration for interactable figure
             if outConfig > 1:
-                print("Compair raw and decimated? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
-                if input() != '2':
+                if outConfig == 2 : print("Output Set to MatLab file and Interactable figure!")
+                else : print("Output Set to Interactable figure!")
+                print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. Yes\n2. No")
+                if input() != '1':
                     keep_raw = False
-                    print("Compair:\n1. Color plot\n2. Individual channel")
+                    print("Only outputting decimated data!")
+                    print("Return:\n1. Color plot\n2. Individual channel")
                     if input() == '1':
                         color_chart = True
                     else:
@@ -119,22 +115,24 @@ if __name__ == "__main__":
                         channel = int(input())
                 else:
                     keep_raw = True
-                    print("Compair:\n1. Color plot\n2. Individual channels")
+                    print("Saving raw data for comparison!")
+                    print("Compare:\n1. Color plot\n2. Individual channels")
                     if input() == '1':
                         color_chart = True
                     else:
                         color_chart = False
                         print("Set figure channel:")
                         channel = int(input())
-            break
-        except:
-            print("Invalid input")
-            continue
+            break # End user input
+        except TypeError: # Prevent crashes due to casting
+            print("Invalid input!")
+        except: # For resetting the program
+            print("Resetting...")
 
+    starttime = time() # Begin timer
     # Iterates between each file
-    starttime = time()
-    print(factorize(intervalConfig))
     for doc in range(len(file)):
+        # Return progress
         print("File (" + str(doc) + "/" + str(len(file)) + ")")
 
         # Retreves tdms data
@@ -152,20 +150,19 @@ if __name__ == "__main__":
             data_sum = append(dataB, append(data, dataA, 1), 1)
         else: # If only one file
             data_sum = data
-        print("Collected matrix: " + str(data_sum.shape))
 
         # Decimates with account to the specified data's neighbores
-        reduce_data = sig_decimate(data_sum, factorize(intervalConfig))
+        reduce_data = sig_decimate(data_sum, factors)
         print(str(doc) + " decimated shape: " + str(reduce_data.shape))
 
         # Create data matrix
         if doc == 0:
-            trimmed = reduce_data[:, 0 : ceil(data.shape[1]/intervalConfig)]
-            print("Trimmed shape: " + str(trimmed.shape))
-            matrix = trimmed
+            # Trim excess and append data
+            matrix = reduce_data[:, 0 : ceil(data.shape[1]/intervalConfig)]
             if keep_raw: 
                 raw_matrix = data
         else:
+            # Trim excess and append data
             matrix = append(matrix, reduce_data[:, ceil(dataB.shape[1]/intervalConfig) : ceil(dataB.shape[1]/intervalConfig) + ceil(data.shape[1]/intervalConfig)], 1)
             if keep_raw: 
                 raw_matrix = append(raw_matrix, data, 1)
