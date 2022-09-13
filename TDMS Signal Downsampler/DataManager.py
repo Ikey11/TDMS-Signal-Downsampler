@@ -36,13 +36,13 @@ def get_filepaths(directory = "Input"):
     return file_paths
 
 ## Packages all data from TDMS file into a single matrix
-def tdms_read(file):
+def tdms_read(file, min = 0, max = None):
     tdms_file = TdmsFile(file)
     print("Reading: " + tdms_file.properties['name'])
     measurements = tdms_file['Measurement']
-    data = empty([len(measurements.channels()), len(measurements['0'])])
+    data = empty([len(measurements.channels()[min : max]), len(measurements[str(min)])])
     i = 0
-    for channel in measurements.channels():
+    for channel in measurements.channels() if max == None else measurements.channels()[min : max]:
         data[i][:] = channel[:]
         i += 1
     print("Matrix created! Shape: " + str(data.shape))

@@ -13,9 +13,11 @@ Mason Becker
 
 # Imports
 from numpy import empty, append  # Array processing
-from scipy.signal import cheby1, dlti, filtfilt, decimate, cosine  # Low-pass filter mechanics
+from scipy.signal import decimate  # Low-pass filter mechanics
 from time import time  # Compilation time
 from math import sqrt, ceil
+import tkinter
+from tkinter import filedialog  # Windows folder selection dialog
 
 # Additional Functions
 import plotlib as PL
@@ -37,7 +39,7 @@ def factorize(n):
     
     # Catch remainder
     if n > 2:
-        factors.append(n)
+        factors.append(int(n))
 
     return factors
 
@@ -54,17 +56,32 @@ def sig_decimate(data, factors, order=8):
 
 ## Main Process
 if __name__ == "__main__":
+    tkinter.Tk().withdraw()  # Prevents empty tkinter window from appearing
 
     # Credits
     print("TDMS Signal Downsampler\nBy Mason Becker\n")
 
-    # Find each avaliable file in Input directory
-    file = DM.get_filepaths(r"Input")
-    # User confirmation
-    print("Input:")
-    for doc in file:
-        print(doc)
-    print("Total files: " + str(len(file)) + "\n")
+    while True:
+    # Directory prompt
+        print("Select folder:")
+
+        folder_path = filedialog.askdirectory()
+        print("Directory: {0}".format(folder_path))
+
+        # Find each avaliable file in Input directory
+        file = DM.get_filepaths(folder_path)
+        # Ensure files exist
+        if len(file) == 0:
+            print("Error! Folder does not contain any TDMS data!\nPress Enter to continue...")
+            input()
+            continue
+        else:
+            # User confirmation
+            print("Input:")
+            for doc in file:
+                print(doc)
+            print("Total files: " + str(len(file)) + "\n")
+            break
 
     # Specify file parameters
     while True:
@@ -83,7 +100,13 @@ if __name__ == "__main__":
                         raise Exception("Resetting...")
                     else:
                         break
-
+            # Set channel limits
+            print("Set channel limits?\n1. Yes\n2. No")
+            if input() == '1':
+                print("Set channel minimum:")
+                CMin = int(input())
+                print("Set channel maximum:")
+                CMax = int(input())
             # Determine output type
             print("Output type:\n1. MatLab file\n2. MatLab file and interactable figure\n3. Interactable figure")
             outConfig = int(input())
@@ -102,8 +125,8 @@ if __name__ == "__main__":
             if outConfig > 1:
                 if outConfig == 2 : print("Output Set to MatLab file and Interactable figure!")
                 else : print("Output Set to Interactable figure!")
-                print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. Yes\n2. No")
-                if input() != '1':
+                print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
+                if input() != '2':
                     keep_raw = False
                     print("Only outputting decimated data!")
                     print("Return:\n1. Color plot\n2. Individual channel")
@@ -137,10 +160,10 @@ if __name__ == "__main__":
 
         # Retreves tdms data
         if doc > 0:
-            dataB = DM.tdms_read(file[doc - 1])
-        data = DM.tdms_read(file[doc])
+            dataB = DM.tdms_read(file[doc - 1], CMin, CMax)
+        data = DM.tdms_read(file[doc], CMin, CMax)
         if doc < len(file) - 1:
-            dataA = DM.tdms_read(file[doc + 1])
+            dataA = DM.tdms_read(file[doc + 1], CMin, CMax)
         # Accumulates the 3 portions into one data set
         if doc == 0 and doc < len(file) - 1: # Only after
             data_sum = append(data, dataA, 1)
