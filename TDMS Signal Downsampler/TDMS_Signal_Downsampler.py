@@ -87,8 +87,11 @@ if __name__ == "__main__":
             break
 
     # Specify file parameters
+    FFproperties = DM.tdms_properties(file[0])  # First file properties in dictionary form
     while True:
         try:
+            # Essential TDMS Data
+            print("Sampling Frequency[Hz]: {0}  Channels: {1}".format(FFproperties["SamplingFrequency[Hz]"], float(FFproperties["MeasureLength[m]"]) / float(FFproperties["SpatialResolution[m]"])))
             # Decimation factor
             print("Decimate factor (Ensure number consists of prime factors under 13):")
             intervalConfig = int(input())
@@ -110,6 +113,9 @@ if __name__ == "__main__":
                 CMin = int(input())
                 print("Set channel maximum:")
                 CMax = int(input())
+            else:
+                CMin = None
+                CMax = None
             # Determine output type
             print("Output type:\n1. MatLab file\n2. MatLab file and interactable figure\n3. Interactable figure")
             outConfig = int(input())
@@ -131,31 +137,32 @@ if __name__ == "__main__":
             if outConfig > 1:
                 if outConfig == 2 : print("Output Set to MatLab file and Interactable figure!")
                 else : print("Output Set to Interactable figure!")
-                print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
-                if input() != '2':
-                    keep_raw = False
-                    print("Only outputting decimated data!")
-                    print("Return:\n1. Color plot\n2. Individual channel")
-                    if input() == '1':
-                        color_chart = True
-                    else:
-                        color_chart = False
-                        print("Set figure channel:")
-                        channel = int(input())
+                #print("Compare raw and decimated data? [Warning: This may be very computationally taxing if used on a large set of data.]\n1. No\n2. Yes")
+                #if input() != '2':
+                keep_raw = False
+                #print("Only outputting decimated data!")
+                print("Return:\n1. Color plot\n2. Individual channel")
+                if input() == '1':
+                    color_chart = True
                 else:
-                    keep_raw = True
-                    print("Saving raw data for comparison!")
-                    print("Compare:\n1. Color plot\n2. Individual channels")
-                    if input() == '1':
-                        color_chart = True
-                    else:
-                        color_chart = False
-                        print("Set figure channel:")
-                        channel = int(input())
+                    color_chart = False
+                    print("Set figure channel:")
+                    channel = int(input())
+                #else:
+                #    keep_raw = True
+                #    print("Saving raw data for comparison!")
+                #    print("Compare:\n1. Color plot\n2. Individual channels")
+                #    if input() == '1':
+                #        color_chart = True
+                #    else:
+                #        color_chart = False
+                #        print("Set figure channel:")
+                #        channel = int(input())
             break # End user input
         except TypeError: # Prevent crashes due to casting
             print("Invalid input!")
-        except: # For resetting the program
+        except Exception as err: # For resetting the program
+            print(err)
             print("Resetting...")
 
     starttime = time() # Begin timer
@@ -201,6 +208,7 @@ if __name__ == "__main__":
 
     # Data export
     if outConfig < 3:
+        DM.properties_save(FFproperties)
         DM.mat_save(matrix)
         if keep_raw:
             DM.mat_save(raw_matrix, 'Output/Out_Raw.mat')
