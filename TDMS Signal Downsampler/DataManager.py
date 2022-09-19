@@ -35,12 +35,25 @@ def get_filepaths(directory = "Input"):
 
     return file_paths
 
+# Recovers the data from a TDMS file and returns a dictionary of it's properties
+def tdms_properties(file):
+    tdms_file = TdmsFile(file)
+    return tdms_file.properties
+
+def properties_save(dict):
+    text = ["Properties of {0}:".format(dict["name"])]
+    for item in dict.keys():
+        text.append(str(item) + ": " + str(dict[item]))
+    open('Output/OutProperties.txt', 'w').writelines('\n'.join(text))
+
 ## Packages all data from TDMS file into a single matrix
 def tdms_read(file, min = 0, max = None):
+    if min == None:
+        min = 0
     tdms_file = TdmsFile(file)
     print("Reading: " + tdms_file.properties['name'])
     measurements = tdms_file['Measurement']
-    data = empty([len(measurements.channels()[min : max]), len(measurements[str(min)])])
+    data = empty([len(measurements.channels() if max == None else measurements.channels()[min : max]), len(measurements[str(min)])])
     i = 0
     for channel in measurements.channels() if max == None else measurements.channels()[min : max]:
         data[i][:] = channel[:]
