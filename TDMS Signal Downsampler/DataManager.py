@@ -15,9 +15,9 @@ def get_filepaths(directory = "Input"):
     # Creates input directory
     if not exists("Output"):
         mkdir("Output")
-    if not exists(directory):
-        mkdir(directory)
-        print(directory + "and Output Directory made!\nInsert TDAS data and press enter to continue...")
+    if not exists("Input"):
+        mkdir("Input")
+        print("Input and Output Directory made!\nInsert TDAS data and press enter to continue...")
         input()
 
     file_paths = []
